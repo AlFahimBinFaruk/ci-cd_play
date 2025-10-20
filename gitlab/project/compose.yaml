@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  app:
+    image: ${APP_IMAGE:-alfahimbin/flask-app:latest}
+    expose:
+      - "5000"
+    networks:
+      - app-network
+
+  nginx:
+    image: ${NGINX_IMAGE:-alfahimbin/flask-nginx:latest}
+    ports:
+      - "8000:80"
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+networks:
+  app-network:
+    driver: bridge
+

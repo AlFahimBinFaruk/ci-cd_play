@@ -1,0 +1,46 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest # Community Edition
+    container_name: gitlab
+    restart: always
+    hostname: gitlab.devops.com # replace with your domain or server IP
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.devops.com'  # use https if SSL is configured
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+    ports:
+      - "8082:80" # HTTP
+      - "8443:443" # HTTPS
+      - "2222:22" # SSH access for Git
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    networks:
+      - gitlab-network
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config.toml:/etc/gitlab-runner/config.toml
+    environment:
+      - REGISTRATION_TOKEN=your-token-here
+      - CI_SERVER_URL=http://gitlab.devops.com
+      - RUNNER_NAME=docker-runner
+      - RUNNER_EXECUTOR=docker
+      - DOCKER_IMAGE=docker:latest
+    networks:
+      - gitlab-network
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+ 
+networks:
+  gitlab-network:
+    driver: bridge
